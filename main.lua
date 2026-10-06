@@ -720,7 +720,7 @@ for _, id in ipairs({
     KillerAnims["rbxassetid://"..id] = true
 end
 
--- 🆕 SKIP ANIMASI (non-attack)
+-- 🆕 SKIP ANIMASI
 SkipAnims = {
     ["112166042383605"] = "Break Pallet",
     ["123047897844134"] = "Stun",
@@ -730,7 +730,7 @@ SkipAnims = {
 }
 
 print("✅ [2/13] COSMIC - Fire + Sky (18) + KillerAnims (28) Loaded")-- =========================================================
--- SECTION 3/13 : FUNGSI UTAMA + HD SKY + APPLY SKY
+-- SECTION 3/13 : FUNGSI UTAMA + HD SKY + FPS/PING (SIMPEL)
 -- =========================================================
 
 function saveState(key, value)
@@ -979,23 +979,6 @@ function applyHeadless(s)
     end
 end
 
-task.spawn(function()
-    while task.wait(0.5) do
-        if S.Headless and LP.Character then
-            local head = LP.Character:FindFirstChild("Head")
-            if head then
-                if head.Transparency ~= 1 then head.Transparency = 1 end
-                for _, v in pairs(head:GetChildren()) do
-                    if (v:IsA("Decal") or v:IsA("SpecialMesh") or v:IsA("Mesh"))
-                        and v.Transparency ~= 1 then
-                        v.Transparency = 1
-                    end
-                end
-            end
-        end
-    end
-end)
-
 -- HD VISUAL EXTRAS
 hdExtras = {}
 
@@ -1203,7 +1186,9 @@ function rejoinServer()
     game:GetService("TeleportService"):Teleport(game.PlaceId, LP)
 end
 
--- FPS + PING
+-- =========================================================
+-- 🆕 FPS + PING GUI (SIMPEL 1 BARIS)
+-- =========================================================
 fpsPingGui = nil
 fpsCounter = 0
 fpsLastTime = tick()
@@ -1212,46 +1197,46 @@ currentPing = 0
 
 function createFPSPingGui()
     if fpsPingGui then fpsPingGui:Destroy() end
+    
     fpsPingGui = Instance.new("ScreenGui")
     fpsPingGui.Name = "CosmicFPSPing"
     fpsPingGui.ResetOnSpawn = false
     fpsPingGui.IgnoreGuiInset = true
+    fpsPingGui.DisplayOrder = 999
     fpsPingGui.Parent = PG
 
     local frame = Instance.new("Frame")
     frame.Name = "MainFrame"
-    frame.Size = UDim2.new(0, 110, 0, 42)
-    frame.Position = UDim2.new(1, -120, 0, 5)
+    frame.Size = UDim2.new(0, 100, 0, 20)
+    frame.Position = UDim2.new(1, -110, 0, 5)
     frame.BackgroundColor3 = Color3.fromRGB(15, 10, 30)
     frame.BackgroundTransparency = 0.3
     frame.BorderSizePixel = 0
     frame.Parent = fpsPingGui
-    rnd(frame, 8)
-    strk(frame, C.ACC, 1.5, 0.3)
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 4)
+    corner.Parent = frame
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Thickness = 1
+    stroke.Color = Color3.fromRGB(140, 70, 255)
+    stroke.Transparency = 0.4
+    stroke.Parent = frame
 
-    local fpsLabel = Instance.new("TextLabel")
-    fpsLabel.Name = "FPSLabel"
-    fpsLabel.Size = UDim2.new(1, -8, 0, 18)
-    fpsLabel.Position = UDim2.new(0, 4, 0, 3)
-    fpsLabel.BackgroundTransparency = 1
-    fpsLabel.Text = "FPS: 0"
-    fpsLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    fpsLabel.TextSize = 11
-    fpsLabel.Font = Enum.Font.GothamBold
-    fpsLabel.TextXAlignment = Enum.TextXAlignment.Left
-    fpsLabel.Parent = frame
-
-    local pingLabel = Instance.new("TextLabel")
-    pingLabel.Name = "PingLabel"
-    pingLabel.Size = UDim2.new(1, -8, 0, 18)
-    pingLabel.Position = UDim2.new(0, 4, 0, 21)
-    pingLabel.BackgroundTransparency = 1
-    pingLabel.Text = "Ping: 0 ms"
-    pingLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    pingLabel.TextSize = 11
-    pingLabel.Font = Enum.Font.GothamBold
-    pingLabel.TextXAlignment = Enum.TextXAlignment.Left
-    pingLabel.Parent = frame
+    local label = Instance.new("TextLabel")
+    label.Name = "StatsLabel"
+    label.Size = UDim2.new(1, -6, 1, 0)
+    label.Position = UDim2.new(0, 3, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = "FPS: 0 | Ping: 0"
+    label.TextColor3 = Color3.fromRGB(0, 255, 150)
+    label.TextSize = 10
+    label.Font = Enum.Font.GothamBold
+    label.TextXAlignment = Enum.TextXAlignment.Center
+    label.TextStrokeTransparency = 0.5
+    label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    label.Parent = frame
 end
 
 RunService.RenderStepped:Connect(function()
@@ -1268,26 +1253,25 @@ end)
 
 task.spawn(function()
     while task.wait(0.5) do
-        if not fpsPingGui then
-            createFPSPingGui()
+        if not fpsPingGui or not fpsPingGui.Parent then
+            pcall(createFPSPingGui)
         end
+        
         if fpsPingGui then
             local frame = fpsPingGui:FindFirstChild("MainFrame")
             if frame then
-                local fpsLabel = frame:FindFirstChild("FPSLabel")
-                local pingLabel = frame:FindFirstChild("PingLabel")
-                if fpsLabel and pingLabel then
-                    if S.ShowFPS then
-                        fpsLabel.Visible = true
-                        fpsLabel.Text = "FPS: " .. tostring(currentFPS)
+                local label = frame:FindFirstChild("StatsLabel")
+                if label then
+                    local fpsText = S.ShowFPS and tostring(currentFPS) or "OFF"
+                    local pingText = S.ShowPing and (tostring(currentPing) .. "ms") or "OFF"
+                    label.Text = "FPS: " .. fpsText .. " | Ping: " .. pingText
+                    
+                    if currentFPS >= 50 then
+                        label.TextColor3 = Color3.fromRGB(0, 255, 150)
+                    elseif currentFPS >= 30 then
+                        label.TextColor3 = Color3.fromRGB(255, 200, 0)
                     else
-                        fpsLabel.Visible = false
-                    end
-                    if S.ShowPing then
-                        pingLabel.Visible = true
-                        pingLabel.Text = "Ping: " .. tostring(currentPing) .. " ms"
-                    else
-                        pingLabel.Visible = false
+                        label.TextColor3 = Color3.fromRGB(255, 70, 100)
                     end
                 end
             end
@@ -1305,7 +1289,7 @@ end
 
 _G.Roooor_updateFPSPing = updateFPSPing
 
-print("✅ [3/13] COSMIC - Fungsi Utama + HD Sky + Apply Sky Loaded")-- =========================================================
+print("✅ [3/13] COSMIC - Fungsi Utama + HD Sky + FPS/Ping (Simpel) Loaded")-- =========================================================
 -- SECTION 4/13 : ESP + AUTO PARRY V5 + AIMBOT SENTER
 -- =========================================================
 
@@ -1469,6 +1453,7 @@ function createStatusESP(player, char, root)
     end
 end
 
+-- GALAXY NAME ANIMATOR
 task.spawn(function()
     while task.wait(0.15) do
         if S.ESPNameMode == "Galaxy" then
@@ -1498,6 +1483,7 @@ task.spawn(function()
     end
 end)
 
+-- ESP GENERATOR
 function GetGameValue(obj, name)
     if not obj then return nil end
     local attr = obj:GetAttribute(name)
@@ -1773,6 +1759,16 @@ AP_lastParry = 0
 AP_parryCount = 0
 AP_hookedKillers = _G.AP_HookedKillers or {}
 _G.AP_HookedKillers = AP_hookedKillers
+
+AP_Config = {
+    Debounce = 0.05,
+    Radius = 15,
+    FaceSensitivity = 0.3,
+    EnableFaceCheck = true,
+    EnableAttributeCheck = false,
+    EnableVelocityCheck = true,
+    RadiusProximity = 15,
+}
 
 local function AP_GetKillerType(char, player)
     local charName = string.lower(char.Name)
@@ -4367,8 +4363,7 @@ closeBtn.MouseButton1Click:Connect(function()
     playToggleSound()
 end)
 
-print("✅ [6/13] COSMIC - GUI + Tombol + Panel Loaded")
-print("🆕 Dropdown persistent + icon emoji")-- =========================================================
+print("✅ [6/13] COSMIC - GUI + Tombol + Panel Loaded")-- =========================================================
 -- SECTION 7/13 : TAB UI PART 1
 -- =========================================================
 
@@ -4385,7 +4380,7 @@ cs = _G.Roooor_cs
 -- TAB 1: SURVIVOR
 makeTab("Survivor", "🏃", 1, function()
 
-    -- 🛡️ AUTO PARRY (GABUNG DARI WISNU STYLE V5)
+    -- 🛡️ AUTO PARRY
     sec("Auto Parry", "🛡️")
     tog("Enable Auto Parry", false, function(s)
         AutoParry.Enabled = s
@@ -4442,7 +4437,7 @@ makeTab("Survivor", "🏃", 1, function()
         end
     end)
     lbl("Auto lock ke muka killer", C.FIRE_BRIGHT)
-    lbl("Laser otomatis nyala", C.GRN)
+    lbl("Laser otomatis nyala ke target", C.GRN)
 
     sl("Aimbot Radius", 10, 500, 100, function(v)
         AimbotSenter.Radius = v
@@ -4468,7 +4463,7 @@ makeTab("Survivor", "🏃", 1, function()
         AimbotSenter.LaserColor = c
     end)
 
-    -- AUTO SKILL CHECK
+    -- ⚡ AUTO SKILL CHECK
     sec("Auto Skill Check (2 MODE)", "⚡")
     tog("Enable Auto Skill Check", false, function(s)
         SkillCheck.Enabled = s
@@ -4490,7 +4485,7 @@ makeTab("Survivor", "🏃", 1, function()
         SkillCheck.Total = 0
     end)
 
-    -- AUTO WIGGLE
+    -- 🔓 AUTO WIGGLE
     sec("Auto Wiggle (Anti Gendong)", "🔓")
     tog("Enable Auto Wiggle", false, function(s)
         AutoParry.Wiggle = s
@@ -4500,7 +4495,7 @@ makeTab("Survivor", "🏃", 1, function()
         AutoParry.WiggleSpam = v
     end)
 
-    -- AUTO FLEE
+    -- 🏃 AUTO FLEE
     sec("Auto Flee Killer", "🏃‍♂️")
     tog("Enable Auto Flee", false, function(s)
         AutoFlee.Enabled = s
@@ -4513,7 +4508,7 @@ makeTab("Survivor", "🏃", 1, function()
         AutoFlee.Cooldown = v
     end)
 
-    -- FAST VAULT
+    -- ⚡ FAST VAULT
     sec("Fast Vault", "⚡")
     tog("Enable Fast Vault", false, function(s)
         FastVault.Enabled = s
@@ -4526,7 +4521,7 @@ makeTab("Survivor", "🏃", 1, function()
         FastVault.Speed = v
     end)
 
-    -- AUTO ESCAPE
+    -- 🚪 AUTO ESCAPE
     sec("Auto Escape Gate", "🚪")
     tog("Enable Auto Escape", false, function(s)
         S.AutoEscapeGate = s
@@ -4543,18 +4538,18 @@ makeTab("Survivor", "🏃", 1, function()
         S.AutoEscapeRange = v
     end)
 
-    -- GOD MODE
+    -- 🛡️ GOD MODE
     sec("God Mode", "🛡️")
     tog("God Mode (Full)", false, function(s)
         GodMode.Enabled = s
     end)
     lbl("Anti Down + Anti Stun + Anti Grab", C.DIM)
 
-    -- SUPPORT
+    -- 💊 SUPPORT
     sec("Support", "💊")
     tog("Instant Interact", false, function(s) S.InstantInteract = s end)
 
-    -- TELEPORT
+    -- 🌀 TELEPORT
     sec("Teleport", "🌀")
     btn("TP ke Finish Line", function()
         teleportToFinishLine()
@@ -4768,7 +4763,7 @@ makeTab("Moonwalk", "🕺", 5, function()
     lbl("Klik tombol LOCK = Lock state", C.ACC2)
     lbl("Tekan V juga bisa toggle", C.DIM)
 
-    tog("Enable Moonwalk", Moonwalk.Enabled, function(s)
+    tog("Enable Moonwalk", false, function(s)
         if setMoonwalk then
             setMoonwalk(s)
         else
@@ -4778,13 +4773,13 @@ makeTab("Moonwalk", "🕺", 5, function()
     end)
 
     sec("Lock", "🔒")
-    tog("Lock Moonwalk", Moonwalk.Locked, function(s)
+    tog("Lock Moonwalk", false, function(s)
         Moonwalk.Locked = s
         if _G.Roooor_mwBtnUpdateUI then pcall(_G.Roooor_mwBtnUpdateUI) end
     end)
 
     sec("Tombol MW", "🎯")
-    tog("Show MW Button", Moonwalk.ShowButton, function(s)
+    tog("Show MW Button", true, function(s)
         Moonwalk.ShowButton = s
         if mwBtnGui then mwBtnGui.Enabled = s end
     end)
@@ -4799,19 +4794,19 @@ makeTab("Moonwalk", "🕺", 5, function()
     end)
 
     sec("Setting Internal", "⚙️")
-    sl("Spam Speed", 1, 50, Moonwalk.SpamSpeed, function(v)
+    sl("Spam Speed", 1, 50, 30, function(v)
         Moonwalk.SpamSpeed = v
     end)
 
-    sl("Intensity", 1, 50, Moonwalk.Intensity, function(v)
+    sl("Intensity", 1, 50, 35, function(v)
         Moonwalk.Intensity = v
     end)
 
-    sl("Slow Speed", 5, 20, Moonwalk.SlowSpeed, function(v)
+    sl("Slow Speed", 5, 20, 13, function(v)
         Moonwalk.SlowSpeed = v
     end)
 
-    tog("Use Slow Speed", Moonwalk.UseSlow, function(s)
+    tog("Use Slow Speed", true, function(s)
         Moonwalk.UseSlow = s
     end)
 end)
@@ -4846,7 +4841,7 @@ makeTab("Misc", "⚙️", 7, function()
     tog("No Clip Camera", false, function(s) S.NoClipCamera = s end)
 
     sec("FOV (Default 90)", "🎥")
-    lbl("Default FOV: 90 (auto ON)", C.GRN)
+    lbl("Default FOV: 90", C.GRN)
     lbl("Klik preset buat ganti FOV", C.FIRE_BRIGHT)
 
     local FOV70Btn = Instance.new("TextButton")
@@ -4955,7 +4950,7 @@ makeTab("Misc", "⚙️", 7, function()
     updateFOVButtons(S.FOV or 90)
 
     sec("Character", "🎭")
-    tog("Headless", true, function(s)
+    tog("Headless", false, function(s)
         S.Headless = s
         applyHeadless(s)
     end)
@@ -4966,8 +4961,8 @@ makeTab("Misc", "⚙️", 7, function()
         applyAntiAFK(s)
     end)
 
-    tog("Show FPS Counter", true, function(s) S.ShowFPS = s end)
-    tog("Show Ping Counter", true, function(s) S.ShowPing = s end)
+    tog("Show FPS Counter", false, function(s) S.ShowFPS = s end)
+    tog("Show Ping Counter", false, function(s) S.ShowPing = s end)
 
     btn("Rejoin Server", function() rejoinServer() end)
 end)
@@ -5009,17 +5004,17 @@ makeTab("Visual", "✨", 9, function()
 
     sec("Lighting", "💡")
     tog("Ultra HD", false, function(s) S.UltraHD = s; applyUltraHD() end)
-    tog("Contrast Boost", true, function(s) S.Contrast = s; applyContrast() end)
-    lbl("Default: ON", C.GRN)
+    tog("Contrast Boost", false, function(s) S.Contrast = s; applyContrast() end)
+    lbl("Default: OFF", C.DIM)
     sl("Contrast", 0, 1, 0.3, function(v) S.ContrastVal = v; applyContrast() end)
     sl("Saturation", 0, 1, 0.2, function(v) S.SaturationVal = v; applyContrast() end)
 
     sec("Sky (18 Preset)", "🌌")
-    drp("Sky Preset", SkyList, "SunsetHD", function(v)
+    drp("Sky Preset", SkyList, "Default", function(v)
         S.SkyId = v
         applySky(v)
     end)
-    lbl("Default: SunsetHD (auto ON)", C.GRN)
+    lbl("Default: Default", C.GRN)
 
     sec("Camera", "🎥")
     lbl("FOV pindah ke Tab Misc (70/90/120)", C.FIRE_BRIGHT)
@@ -5030,7 +5025,7 @@ makeTab("Visual", "✨", 9, function()
     end)
 
     sec("8-Bit Royal Crown (Client)", "👑")
-    tog("Enable 8-Bit Crown", true, function(s)
+    tog("Enable 8-Bit Crown", false, function(s)
         S.EightBitOn = s
         apply8Bit(s, "Royal Crown", S.EightBitSize, S.EightBitHeight)
     end)
@@ -5044,7 +5039,7 @@ makeTab("Visual", "✨", 9, function()
     end)
 
     sec("Korblox Pencil (Client)", "🦴")
-    tog("Enable Korblox", true, function(s)
+    tog("Enable Korblox", false, function(s)
         S.Korblox = s
         applyKorblox(s, "Pencil", S.KorbloxYOffset, S.KorbloxScale)
     end)
@@ -5159,7 +5154,7 @@ makeTab("Visual", "✨", 9, function()
     lbl("Moonwalk: Tombol MW / Tekan V", C.FIRE_BRIGHT)
     lbl("Unlock Camera: Tekan K", C.FIRE_BRIGHT)
     lbl("Auto Parry: Tab Survivor", C.FIRE_BRIGHT)
-    lbl("Aimbot Senter: Tab Survivor (Hold to Lock)", C.FIRE_BRIGHT)
+    lbl("Aimbot Senter: Tab Survivor", C.FIRE_BRIGHT)
     lbl("Hitbox: Tab Hitbox", C.FIRE_BRIGHT)
     lbl("Aimbot: Tab Aimbot", C.FIRE_BRIGHT)
 
@@ -5174,7 +5169,6 @@ makeTab("Visual", "✨", 9, function()
             if mwBtnGui then mwBtnGui:Destroy() end
             if Aimlock_Gui then Aimlock_Gui:Destroy() end
             if AimbotLaserGui then AimbotLaserGui:Destroy() end
-            if AimbotSenterButton then AimbotSenterButton:Destroy() end
             clear8Bit()
             clearKorblox()
             AP_ClearCircle()
@@ -5238,11 +5232,10 @@ makeTab("Hitbox", "📦", 10, function()
 end)
 
 print("✅ [8/13] COSMIC - Misc + Visual + Hitbox Loaded")-- =========================================================
--- SECTION 9/13 : KEYBIND (AUTO APPLY DIHAPUS)
+-- SECTION 9/13 : KEYBIND (NO AUTO APPLY)
 -- =========================================================
 
--- ❌ AUTO APPLY DIHAPUS - Semua fitur default OFF
-print("[AUTO] Semua fitur manual - user toggle sendiri")
+-- ❌ AUTO APPLY DIHAPUS - Semua fitur manual
 
 -- KEYBIND V UNTUK MOONWALK
 UIS.InputBegan:Connect(function(input, gpe)
@@ -5302,14 +5295,13 @@ end)
 
 print("[KEYBIND] V = Moonwalk | K = Unlock Camera")
 
--- FPS/Ping GUI (cuma create, gak auto-show)
+-- Create FPS/Ping GUI (hidden by default)
 task.spawn(function()
     task.wait(3)
     pcall(createFPSPingGui)
-    print("[AUTO] FPS/Ping GUI created - toggle manual")
 end)
 
--- Respawn — TIDAK auto-apply fitur
+-- ❌ NO AUTO APPLY SAAT RESPAWN
 LP.CharacterAdded:Connect(function(char)
     task.wait(1.5)
     print("[RESPAWN] Fitur manual - user toggle sendiri")
@@ -5529,8 +5521,23 @@ task.spawn(function()
     end
 end)
 
+-- FIX FOV BIND
+task.spawn(function()
+    RunService.RenderStepped:Connect(function()
+        if S.FOVEnabled then
+            local cam = workspace.CurrentCamera
+            if cam and math.abs(cam.FieldOfView - S.FOV) > 0.5 then
+                pcall(function()
+                    cam.FieldOfView = S.FOV
+                end)
+            end
+        end
+    end)
+end)
+
 print("✅ [10/13] COSMIC - Logic Fitur Baru Loaded")
-print("⚡ Sky+Fire Auto-Reapply: 1 loop (8s)")-- =========================================================
+print("⚡ Sky+Fire Auto-Reapply: 1 loop (8s)")
+print("🎥 FOV Bind: RenderStepped")-- =========================================================
 -- SECTION 11/13 : PRINT FINAL
 -- =========================================================
 task.wait(0.5)
@@ -5539,21 +5546,13 @@ print("╔═══════════════════════�
 print("║  COSMIC HUB                              ║")
 print("║  SEMUA FITUR LOADED                      ║")
 print("╠══════════════════════════════════════════╣")
-print("║  AUTO ON SAAT EXECUTE:                   ║")
-print("║     -> Fire: CosmicFire                  ║")
-print("║     -> ESP: Galaxy Mode (Size 9.35)      ║")
-print("║     -> Contrast: ON                      ║")
-print("║     -> Sky: SunsetHD                     ║")
-print("║     -> FOV: 90 (Tab Misc)                ║")
-print("║     -> Auto Parry: Radius 15             ║")
-print("║     -> Auto Parry: Debounce 0.05         ║")
-print("║     -> Auto Parry: Face 0.3              ║")
+print("║  ⚙️ SEMUA FITUR DEFAULT OFF              ║")
+print("║     -> User toggle manual                ║")
 print("╠══════════════════════════════════════════╣")
 print("║  AUTO PARRY V5 (Tab Survivor)            ║")
 print("║     -> Hybrid (Event + Loop 0.005s)      ║")
-print("║     -> Double Tap Press                  ║")
+print("║     -> Double Tap Press                  ║") 
 print("║     -> Predictive (Velocity Spike)       ║")
-print("║     -> Bypass Debounce (Attack Type)     ║")
 print("║     -> Filter Killer:                    ║")
 print("║        Hidden Mark: SKIP                 ║")
 print("║        Abyss Slash: PARRY                ║")
@@ -5563,10 +5562,10 @@ print("║        Stun: SKIP                        ║")
 print("║        WalkCrouch: SKIP                  ║")
 print("╠══════════════════════════════════════════╣")
 print("║  AIMBOT SENTER (Tab Survivor)            ║")
-print("║     -> Hold to Lock                      ║")
+print("║     -> Auto Lock (No Button)             ║")
 print("║     -> Lock ke Muka Killer               ║")
 print("║     -> ESP Laser                         ║")
-print("║     -> Tombol 🔦 di layar                ║")
+print("║     -> Toggle ON/OFF                     ║")
 print("╠══════════════════════════════════════════╣")
 print("║  AUTO SKILL CHECK (2 MODE)               ║")
 print("║     -> Instant: paksa sukses             ║")
@@ -5591,7 +5590,7 @@ print("║     -> Sky 18 PRESET                     ║")
 print("║     -> ESP Galaxy (Animated)             ║")
 print("║     -> ESP Generator (Classic + Bar)     ║")
 print("║     -> Anti-AFK + Rejoin                 ║")
-print("║     -> FPS + Ping Counter                ║")
+print("║     -> FPS + Ping Counter (Simpel)       ║")
 print("╠══════════════════════════════════════════╣")
 print("║  CAMERA FIX (ANTI-LOCK)                  ║")
 print("║     -> Skip GUI Focus                    ║")
@@ -5613,15 +5612,12 @@ print("║  Hitbox: Tab Hitbox                      ║")
 print("╚══════════════════════════════════════════╝")
 
 print("✅ [11/13] COSMIC - FINAL LOADED!")
-print("🔥 Fire: CosmicFire (auto ON)")
-print("🌈 ESP: Galaxy Mode (Size 9.35)")
-print("🎨 Contrast: ON")
-print("🔷 Sky: SunsetHD (auto ON)")
-print("🎥 FOV: 90 (auto ON)")
+print("⚙️ SEMUA FITUR DEFAULT OFF - toggle manual")
 print("🛡️ Auto Parry: Radius 15 | Debounce 0.05 | Face 0.3")
-print("🔦 Aimbot Senter: Hold to Lock")
+print("🔦 Aimbot Senter: Auto Lock (No Button)")
 print("⚡ Auto Skill Check: Fallens Style")
-print("🎥 Camera Fix: Anti-Lock Active")-- =========================================================
+print("🎥 Camera Fix: Anti-Lock Active")
+print("🎯 Klik tombol C untuk buka menu")-- =========================================================
 -- SECTION 12/13 : AIMBOT TAB (KILLER AIMLOCK)
 -- =========================================================
 
@@ -6066,7 +6062,7 @@ end)
 print("✅ [12/13] COSMIC - AIMBOT TAB Loaded")
 print("🎯 Target Survivor | Radius max 100")
 print("👁️ Floating GUI: Toggle di tab Aimbot")-- =========================================================
--- SECTION 13/13 : ANTI-ILANG MENU + RECOVERY
+-- SECTION 13/13 : ANTI-ILANG MENU + AUTO RECOVERY
 -- =========================================================
 
 pcall(function()
@@ -6080,7 +6076,7 @@ pcall(function()
     if AimbotLaserGui then AimbotLaserGui.ResetOnSpawn = false end
 end)
 
--- 🆕 Force ResetOnSpawn = false di SEMUA GUI
+-- Force ResetOnSpawn = false di SEMUA GUI
 local function ForceResetOnSpawnFalse()
     for _, g in ipairs(PG:GetChildren()) do
         if g:IsA("ScreenGui") then
@@ -6099,7 +6095,7 @@ end)
 
 print("[ANTI-HILANG] Force ResetOnSpawn = false aktif")
 
--- 🆕 Function recreate semua GUI kalau ilang
+-- 🆕 AUTO RE-EXECUTE URL
 local SCRIPT_URL = "https://raw.githubusercontent.com/tiarkenn-dev/Cosmishub/main/main.lua"
 
 function RecreateAllGUI()
@@ -6112,7 +6108,6 @@ function RecreateAllGUI()
             print("[RECOVERY] CosmicHub recovered")
         else
             warn("[RECOVERY] CosmicHub ilang, re-execute SC...")
-            -- 🆕 Auto re-execute
             task.spawn(function()
                 pcall(function()
                     loadstring(game:HttpGet(SCRIPT_URL))()
@@ -6166,14 +6161,13 @@ function RecreateAllGUI()
     end
 end
 
--- Loop cek tiap 1 detik
 task.spawn(function()
     while task.wait(1) do
         pcall(RecreateAllGUI)
     end
 end)
 
--- 🆕 Respawn — Menu restored, fitur TIDAK auto-apply
+-- Respawn — Menu restored, fitur TIDAK auto-apply
 LP.CharacterAdded:Connect(function(char)
     task.wait(2)
     print("[RESPAWN] Menu restored - fitur manual")
@@ -6185,7 +6179,7 @@ LP.CharacterAdded:Connect(function(char)
     print("[RESPAWN] Selesai!")
 end)
 
--- 🆕 Detect place change — Menu restored
+-- Detect place change — Menu restored
 local _lastPlaceId = game.PlaceId
 task.spawn(function()
     while task.wait(2) do
@@ -6209,16 +6203,17 @@ print("")
 print("═══════════════════════════════════════════")
 print("  SECTION 13 - ANTI-ILANG MENU")
 print("═══════════════════════════════════════════")
-print("  ResetOnSpawn = false (semua GUI)")
-print("  Force loop tiap 2 detik")
-print("  Recovery loop tiap 1 detik")
-print("  Auto re-execute kalo GUI ilang total")
+print("  ✅ ResetOnSpawn = false (semua GUI)")
+print("  ✅ Force loop tiap 2 detik")
+print("  ✅ Recovery loop tiap 1 detik")
+print("  ✅ Auto re-execute kalo GUI ilang total")
 print("  ❌ NO auto apply fitur")
-print("  Menu restored pas respawn")
-print("  Menu restored pas pindah place")
+print("  ✅ Menu restored pas respawn")
+print("  ✅ Menu restored pas pindah place")
 print("═══════════════════════════════════════════")
 print("✅ [13/13] ANTI-ILANG MENU LOADED")
 print("")
 print("🎯 Klik tombol C untuk buka menu")
 print("🛡️ Auto Parry: Tab Survivor")
 print("🔦 Aimbot Senter: Tab Survivor (Auto Lock)")
+print("")
