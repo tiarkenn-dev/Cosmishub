@@ -365,7 +365,6 @@ rnd(barGlow, 999)
 
 task.delay(1.6, function()
     if not loadingGui then return end
-
     if bg and bg.Parent then
         TweenService:Create(bg, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
             BackgroundTransparency = 1
@@ -402,15 +401,13 @@ task.delay(1.6, function()
             BackgroundTransparency = 1
         }):Play()
     end
-
     task.wait(0.8)
     if loadingGui then loadingGui:Destroy() end
 end)
 
 -- =========================================================
--- STATE (SEMUA OFF DEFAULT)
+-- STATE
 -- =========================================================
-
 _G.RoooorSavedStates = _G.RoooorSavedStates or {}
 
 _G.RoooorS = _G.RoooorS or {
@@ -420,7 +417,7 @@ _G.RoooorS = _G.RoooorS or {
     SpeedHack = false, SpeedHackVal = 40,
     NoClip = false, NoClipCamera = false,
     Korblox = false, KorbloxType = "Pencil",
-    KorbloxYOffset = 0.6, KorbloxScale = 1,
+    KorbloxYOffset = 0.80, KorbloxScale = 1,
     Headless = false,
     EightBitOn = false, EightBitType = "Royal Crown",
     EightBitSize = 1.24, EightBitHeight = 0.88,
@@ -519,14 +516,16 @@ AP_PARRY_DEBOUNCE = 0.05
 PARRY_DEBOUNCE = 0.1
 ParryActive = false
 
+-- AIMBOT SENTER (UPDATED)
 AimbotSenter = _G.Roooor_AimbotSenter or {
     Enabled = false,
-    Radius = 100,
+    Radius = 99999,
     LockPart = "Head",
     ShowLaser = true,
     LaserColor = Color3.fromRGB(255, 0, 0),
     Smoothness = 0.5,
     CurrentTarget = nil,
+    HoldingSenter = false,
 }
 _G.Roooor_AimbotSenter = AimbotSenter
 
@@ -560,7 +559,7 @@ _G.Roooor_AutoFlee = AutoFlee
 EightBitList = { "Royal Crown" }
 EightBitIds = { ["Royal Crown"] = 10138606900 }
 KorbloxList = { "Pencil" }
-KorbloxIds = { ["Pencil"] = 902942093 }
+KorbloxIds = { ["Pencil"] = 902942096 }
 
 FireBeamList = {
     "Classic Beam", "Laser Beam", "Rainbow Beam",
@@ -586,7 +585,7 @@ Aimlock_AttackButtons = {}
 print("✅ [1/13] COSMIC - Base + State Loaded")
 print("❌ Semua fitur default OFF")
 print("🛡️ Auto Parry: Radius 15 | Debounce 0.05 | Face 0.3")
-print("🔦 Aimbot Senter: Auto Lock")-- =========================================================
+print("🔦 Aimbot Senter: Radius unlimited | Hold tombol senter = lock")-- =========================================================
 -- SECTION 2/13 : FIRE CONFIG + SKY + KILLER ANIMS
 -- =========================================================
 
@@ -711,16 +710,15 @@ for _, id in ipairs({
     "80411309607666","98163597193511","82666958311998","110355011987939",
     "139369275981139","135002183282873","121216847022485","130593238885843",
     "117070354890871","106871536134254","138720291317243",
-    "127096285501517",  -- PARRY ANIM
-    "112166042383605",  -- BREAK PALLET
-    "123047897844134",  -- STUN
-    "126965695851149",  -- WALKCROUCH
-    "135084204086504"   -- WALKCROUCH INJURED
+    "127096285501517",
+    "112166042383605",
+    "123047897844134",
+    "126965695851149",
+    "135084204086504"
 }) do
     KillerAnims["rbxassetid://"..id] = true
 end
 
--- 🆕 SKIP ANIMASI
 SkipAnims = {
     ["112166042383605"] = "Break Pallet",
     ["123047897844134"] = "Stun",
@@ -730,7 +728,7 @@ SkipAnims = {
 }
 
 print("✅ [2/13] COSMIC - Fire + Sky (18) + KillerAnims (28) Loaded")-- =========================================================
--- SECTION 3/13 : FUNGSI UTAMA + HD SKY + FPS/PING (SIMPEL)
+-- SECTION 3/13 : FUNGSI UTAMA + HD SKY + FPS/PING
 -- =========================================================
 
 function saveState(key, value)
@@ -867,7 +865,9 @@ function apply8Bit(enable, itemName, size, height)
     weld.Parent = eightBitPart
 end
 
--- KORBLOX PENCIL
+-- =========================================================
+-- KORBLOX PENCIL (FIXED: Mesh 902942096 + Texture 902843398)
+-- =========================================================
 korbloxParts = {}
 korbloxOrigData = {}
 
@@ -895,39 +895,26 @@ function applyKorblox(enable, mode, yOffset, scale)
     clearKorblox()
     if not enable then return end
 
-    yOffset = yOffset or S.KorbloxYOffset or 0.6
+    yOffset = 0.80
     scale = scale or S.KorbloxScale or 1
 
     local char = LP.Character
     if not char then return end
 
-    local legParts = {}
-    for _, name in ipairs({
-        "Right Leg", "RightUpperLeg", "RightLowerLeg", "RightFoot",
-        "Right Knee", "Right Hip"
-    }) do
-        local leg = char:FindFirstChild(name)
-        if leg then
-            table.insert(legParts, leg)
-        end
-    end
+    local rightLeg = char:FindFirstChild("Right Leg")
+    if not rightLeg then return end
 
-    if #legParts == 0 then return end
+    korbloxOrigData["Right Leg"] = {
+        trans = rightLeg.Transparency,
+        collide = rightLeg.CanCollide,
+    }
 
-    for _, leg in ipairs(legParts) do
-        korbloxOrigData[leg.Name] = {
-            trans = leg.Transparency,
-            collide = leg.CanCollide,
-        }
-        leg.Transparency = 1
-        leg.CanCollide = false
-    end
-
-    local mainPart = legParts[1]
+    rightLeg.Transparency = 1
+    rightLeg.CanCollide = false
 
     local korbloxPart = Instance.new("Part")
     korbloxPart.Name = "ClientKorblox"
-    korbloxPart.Size = mainPart.Size
+    korbloxPart.Size = Vector3.new(1, 2, 1)
     korbloxPart.CanCollide = false
     korbloxPart.Massless = true
     korbloxPart.Transparency = 0
@@ -935,27 +922,24 @@ function applyKorblox(enable, mode, yOffset, scale)
 
     local mesh = Instance.new("SpecialMesh")
     mesh.MeshType = Enum.MeshType.FileMesh
-    mesh.MeshId = "rbxassetid://902942093"
+    mesh.MeshId = "rbxassetid://902942096"
     mesh.TextureId = "rbxassetid://902843398"
-
-    local legSize = mainPart.Size
-    mesh.Scale = Vector3.new(
-        legSize.X * scale,
-        legSize.Y * scale,
-        legSize.Z * scale
-    )
+    mesh.Scale = Vector3.new(1, 1, 1)
+    mesh.Offset = Vector3.new(0, yOffset, 0)
     mesh.Parent = korbloxPart
 
     local weld = Instance.new("Weld")
-    weld.Part0 = mainPart
+    weld.Part0 = rightLeg
     weld.Part1 = korbloxPart
-    weld.C0 = CFrame.new(0, yOffset, 0)
+    weld.C0 = CFrame.new(0, 0, 0)
     weld.Parent = korbloxPart
 
     table.insert(korbloxParts, korbloxPart)
 end
 
--- HEADLESS
+-- =========================================================
+-- HEADLESS (FULL: head + aksesoris + muka ilang)
+-- =========================================================
 function applyHeadless(s)
     local char = LP.Character
     if not char then return end
@@ -964,16 +948,48 @@ function applyHeadless(s)
 
     if s then
         head.Transparency = 1
-        for _, v in pairs(head:GetChildren()) do
-            if v:IsA("Decal") or v:IsA("SpecialMesh") or v:IsA("Mesh") then
+        head.CanCollide = false
+
+        for _, v in pairs(head:GetDescendants()) do
+            if v:IsA("BasePart") then
                 v.Transparency = 1
+                v.CanCollide = false
+            elseif v:IsA("Decal") or v:IsA("Texture") then
+                v.Transparency = 1
+            end
+        end
+
+        for _, obj in pairs(char:GetChildren()) do
+            if obj:IsA("Accessory") then
+                for _, part in pairs(obj:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.Transparency = 1
+                        part.CanCollide = false
+                    end
+                end
             end
         end
     else
         head.Transparency = 0
-        for _, v in pairs(head:GetChildren()) do
-            if v:IsA("Decal") or v:IsA("SpecialMesh") or v:IsA("Mesh") then
+        head.CanCollide = true
+
+        for _, v in pairs(head:GetDescendants()) do
+            if v:IsA("BasePart") then
                 v.Transparency = 0
+                v.CanCollide = true
+            elseif v:IsA("Decal") or v:IsA("Texture") then
+                v.Transparency = 0
+            end
+        end
+
+        for _, obj in pairs(char:GetChildren()) do
+            if obj:IsA("Accessory") then
+                for _, part in pairs(obj:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.Transparency = 0
+                        part.CanCollide = true
+                    end
+                end
             end
         end
     end
@@ -1154,13 +1170,11 @@ function applySky(skyName)
             c.Name = "OrigSky_Clone"
             c.Parent = Lighting
         end
-        print("[SKY] Restored default sky")
         return
     end
 
     local ids = SkyIds[skyName]
     if not ids then
-        warn("[SKY] Sky '" .. tostring(skyName) .. "' gak ada, fallback")
         ids = SkyIds.SunsetHD
     end
 
@@ -1173,8 +1187,6 @@ function applySky(skyName)
     sky.SkyboxRt = ids.Rt or ids.Bk
     sky.SkyboxUp = ids.Up or ids.Bk
     sky.Parent = Lighting
-
-    print("[SKY] Applied:", skyName)
 end
 
 -- MISC UTILITY
@@ -1187,7 +1199,7 @@ function rejoinServer()
 end
 
 -- =========================================================
--- 🆕 FPS + PING GUI (SIMPEL 1 BARIS)
+-- FPS + PING GUI
 -- =========================================================
 fpsPingGui = nil
 fpsCounter = 0
@@ -1289,7 +1301,9 @@ end
 
 _G.Roooor_updateFPSPing = updateFPSPing
 
-print("✅ [3/13] COSMIC - Fungsi Utama + HD Sky + FPS/Ping (Simpel) Loaded")-- =========================================================
+print("✅ [3/13] COSMIC - Fungsi Utama + HD Sky + FPS/Ping Loaded")
+print("🦴 Korblox: Mesh 902942096 | Texture 902843398 | Offset 0.80")
+print("👤 Headless: FULL")-- =========================================================
 -- SECTION 4/13 : ESP + AUTO PARRY V5 + AIMBOT SENTER
 -- =========================================================
 
@@ -1453,7 +1467,6 @@ function createStatusESP(player, char, root)
     end
 end
 
--- GALAXY NAME ANIMATOR
 task.spawn(function()
     while task.wait(0.15) do
         if S.ESPNameMode == "Galaxy" then
@@ -1483,7 +1496,6 @@ task.spawn(function()
     end
 end)
 
--- ESP GENERATOR
 function GetGameValue(obj, name)
     if not obj then return nil end
     local attr = obj:GetAttribute(name)
@@ -1753,7 +1765,7 @@ function UpdateSCPEsp(root)
 end
 
 -- =========================================================
--- AUTO PARRY V5 (HYBRID + FILTER KILLER)
+-- AUTO PARRY V5
 -- =========================================================
 AP_lastParry = 0
 AP_parryCount = 0
@@ -1836,7 +1848,6 @@ local function AP_TryParry(reason)
         _AP_lastParry = now
         AP_PressParryButton()
         AP_parryCount = AP_parryCount + 1
-        print("[AP] PARRY #" .. AP_parryCount .. " | " .. (reason or "?"))
         return true
     end
     return false
@@ -2022,9 +2033,7 @@ task.spawn(function()
     end
 end)
 
--- =========================================================
 -- CAMERA FIX
--- =========================================================
 AP_CamLastForced = 0
 AP_CamLastCFrame = nil
 AP_CamStuckTime = 0
@@ -2069,7 +2078,7 @@ task.spawn(function()
         end
 
         if GuiService.SelectedObject then isStuck = false end
-        if AimbotSenter.Enabled and AimbotSenter.CurrentTarget then isStuck = false end
+        if AimbotSenter.Enabled and AimbotSenter.CurrentTarget and AimbotSenter.HoldingSenter then isStuck = false end
 
         if isStuck then
             local now = tick()
@@ -2087,7 +2096,7 @@ task.spawn(function()
 end)
 
 -- =========================================================
--- AIMBOT SENTER (AUTO LOCK - NO BUTTON)
+-- AIMBOT SENTER (FIXED: Radius unlimited + Hold tombol)
 -- =========================================================
 AimbotLaserGui = nil
 AimbotLaserLines = {}
@@ -2109,12 +2118,12 @@ local function GetClosestKillerForSenter()
     if not myRoot then return nil end
     
     local closest = nil
-    local shortest = AimbotSenter.Radius
+    local shortest = math.huge  -- UNLIMITED
     
     for _, p in pairs(Players:GetPlayers()) do
         if p ~= LP and p.Character and p.Team and p.Team.Name == "Killer" then
             local hum = p.Character:FindFirstChildOfClass("Humanoid")
-            local targetPart = p.Character:FindFirstChild(AimbotSenter.LockPart)
+            local targetPart = p.Character:FindFirstChild(AimbotSenter.LockPart or "Head")
             
             if hum and hum.Health > 0 and targetPart then
                 local dist = (targetPart.Position - myRoot.Position).Magnitude
@@ -2128,26 +2137,33 @@ local function GetClosestKillerForSenter()
     return closest
 end
 
+local function ClearSenterLaser()
+    if AimbotLaserGui then
+        for _, line in pairs(AimbotLaserLines) do
+            if line then line:Remove() end
+        end
+        AimbotLaserLines = {}
+    end
+end
+
 task.spawn(function()
     while task.wait() do
         if not AimbotSenter.Enabled then
-            if AimbotLaserGui then
-                for _, line in pairs(AimbotLaserLines) do
-                    if line then line:Remove() end
-                end
-                AimbotLaserLines = {}
-            end
+            ClearSenterLaser()
+            continue
+        end
+        
+        -- Lock cuma kalo tombol senter di-HOLD
+        if not AimbotSenter.HoldingSenter then
+            AimbotSenter.CurrentTarget = nil
+            ClearSenterLaser()
             continue
         end
         
         local target = GetClosestKillerForSenter()
         if not target then
-            if AimbotLaserGui then
-                for _, line in pairs(AimbotLaserLines) do
-                    if line then line:Remove() end
-                end
-                AimbotLaserLines = {}
-            end
+            AimbotSenter.CurrentTarget = nil
+            ClearSenterLaser()
             continue
         end
         
@@ -2162,17 +2178,14 @@ task.spawn(function()
         end
         
         if AimbotSenter.ShowLaser then
-            local cam = workspace.CurrentCamera
-            local screenPoint, onScreen = cam:WorldToViewportPoint(target.Position)
+            local cam2 = workspace.CurrentCamera
+            local screenPoint, onScreen = cam2:WorldToViewportPoint(target.Position)
             
             if onScreen then
-                for _, line in pairs(AimbotLaserLines) do
-                    if line then line:Remove() end
-                end
-                AimbotLaserLines = {}
+                ClearSenterLaser()
                 
-                local centerX = cam.ViewportSize.X / 2
-                local centerY = cam.ViewportSize.Y / 2
+                local centerX = cam2.ViewportSize.X / 2
+                local centerY = cam2.ViewportSize.Y / 2
                 
                 local line = Drawing.new("Line")
                 line.Visible = true
@@ -2184,6 +2197,44 @@ task.spawn(function()
                 
                 table.insert(AimbotLaserLines, line)
             end
+        end
+    end
+end)
+
+-- HOOK TOMBOL SENTER
+function HookSenterButtons()
+    for _, obj in pairs(PG:GetDescendants()) do
+        if obj:IsA("GuiObject") and obj.Visible then
+            local n = string.lower(obj.Name)
+            if (n:find("flashlight") or n:find("senter")
+               or n:find("light") or n:find("torch"))
+               and not obj:GetAttribute("SenterHooked") then
+                
+                obj:SetAttribute("SenterHooked", true)
+                
+                obj.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1
+                       or input.UserInputType == Enum.UserInputType.Touch then
+                        AimbotSenter.HoldingSenter = true
+                    end
+                end)
+                
+                obj.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1
+                       or input.UserInputType == Enum.UserInputType.Touch then
+                        AimbotSenter.HoldingSenter = false
+                        AimbotSenter.CurrentTarget = nil
+                    end
+                end)
+            end
+        end
+    end
+end
+
+task.spawn(function()
+    while task.wait(2) do
+        if AimbotSenter.Enabled then
+            HookSenterButtons()
         end
     end
 end)
@@ -2287,9 +2338,9 @@ function AP_UpdateCircle()
         beam.Color = ColorSequence.new(ringColor)
         beam.Transparency = NumberSequence.new(0)
     end
-end-- =========================================================
--- AUTO SKILL CHECK (FALLENS STYLE)
--- =========================================================
+end
+
+-- SKILL CHECK
 function pressSpace()
     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
     task.wait()
@@ -2643,7 +2694,7 @@ task.spawn(function()
     end
 end)
 
--- FAST VAULT + TELEPORT + NOCLIP + VISUAL
+-- FAST VAULT
 function normalizeVaultId(id)
     local num = tostring(id):match("%d+")
     return num and ("rbxassetid://" .. num)
@@ -2953,7 +3004,6 @@ _G.Roooor_createStatusESP = createStatusESP
 _G.Roooor_UpdateGenerator = UpdateGenerator
 _G.Roooor_UpdateMapESP = UpdateMapESP
 _G.Roooor_UpdateSCPEsp = UpdateSCPEsp
-_G.Roooor_scanKillers = AP_ScanKillers
 _G.Roooor_startSkillCheck = startSkillCheck
 _G.Roooor_setMoonwalk = setMoonwalk
 _G.Roooor_mwBtnUpdateUI = mwBtnUpdateUI
@@ -2979,28 +3029,21 @@ _G.Roooor_hitboxClearAll = hitboxClearAll
 _G.Roooor_hitboxUpdateVisibility = hitboxUpdateVisibility
 _G.Roooor_GetGeneratorProgress = GetGeneratorProgress
 
-_G.AP_ScanKillers = AP_ScanKillers
 _G.AP_ClearCircle = AP_ClearCircle
 _G.AP_GetCount = function() return AP_parryCount end
 _G.AP_Config = AP_Config
 _G.Roooor_AimbotSenter = AimbotSenter
 
-print("✅ [4/13] COSMIC - ESP + Auto Parry V5 + Aimbot Senter + Moonwalk + Hitbox Loaded")
-print("🛡️ Auto Parry: Radius 15 | Debounce 0.05 | Face 0.3")
-print("🔦 Aimbot Senter: Auto Lock (No Button)")
-print("📊 ESP Gen: Classic + Bar")
-print("⚡ Auto Skill Check: Fallens Style")-- =========================================================
+print("✅ [4/13] COSMIC - ESP + Auto Parry V5 + Aimbot Senter FIXED")
+print("🔦 Aimbot Senter: Radius UNLIMITED | Hold tombol = lock | Lepas = bebas")-- =========================================================
 -- SECTION 5/13 : FITUR AKTIF + LOOP UTAMA
 -- =========================================================
 
--- GABUNGAN RENDERSTEPPED (3 → 1)
 RunService.RenderStepped:Connect(function()
-    -- Auto Parry Circle
     if AutoParry.Enabled then
         pcall(AP_UpdateCircle)
     end
 
-    -- FOV Anti-Override
     if S.FOVEnabled then
         local cam = workspace.CurrentCamera
         if cam and math.abs(cam.FieldOfView - S.FOV) > 0.5 then
@@ -3008,7 +3051,6 @@ RunService.RenderStepped:Connect(function()
         end
     end
 
-    -- Moonwalk
     if Moonwalk.Enabled and not ParryActive and not mwIsDowned() then
         local char = LP.Character
         if char and char.Parent then
@@ -3617,9 +3659,7 @@ task.spawn(function()
     end
 end)
 
-print("✅ [5/13] COSMIC - Fitur Aktif + Loop Utama Loaded")
-print("⚡ RenderStepped: 3 → 1")
-print("⚡ ESP Loop: 0.2s | Anti-AFK: 120s")-- =========================================================
+print("✅ [5/13] COSMIC - Fitur Aktif + Loop Utama Loaded")-- =========================================================
 -- SECTION 6/13 : GUI COSMIC + TOMBOL + PANEL
 -- =========================================================
 
@@ -4191,7 +4231,6 @@ function btn(name, cb)
     end)
 end
 
--- DROPDOWN PERSISTENT
 function drp(name, options, def, cb)
     local f = Instance.new("Frame")
     f.Size = UDim2.new(1, -4, 0, 28)
@@ -4380,7 +4419,7 @@ cs = _G.Roooor_cs
 -- TAB 1: SURVIVOR
 makeTab("Survivor", "🏃", 1, function()
 
-    -- 🛡️ AUTO PARRY
+    -- AUTO PARRY
     sec("Auto Parry", "🛡️")
     tog("Enable Auto Parry", false, function(s)
         AutoParry.Enabled = s
@@ -4423,11 +4462,13 @@ makeTab("Survivor", "🏃", 1, function()
         AP_parryCount = 0
     end)
 
-    -- 🔦 AIMBOT SENTER (AUTO LOCK)
-    sec("Aimbot Senter (Auto Lock)", "🔦")
+    -- AIMBOT SENTER (AUTO LOCK)
+    sec("Aimbot Senter (Hold Button)", "🔦")
     tog("Enable Aimbot Senter", false, function(s)
         AimbotSenter.Enabled = s
         if not s then
+            AimbotSenter.HoldingSenter = false
+            AimbotSenter.CurrentTarget = nil
             if AimbotLaserGui then
                 for _, line in pairs(AimbotLaserLines) do
                     if line then line:Remove() end
@@ -4436,13 +4477,9 @@ makeTab("Survivor", "🏃", 1, function()
             end
         end
     end)
-    lbl("Auto lock ke muka killer", C.FIRE_BRIGHT)
-    lbl("Laser otomatis nyala ke target", C.GRN)
-
-    sl("Aimbot Radius", 10, 500, 100, function(v)
-        AimbotSenter.Radius = v
-    end)
-    lbl("Default 100", C.GRN)
+    lbl("HOLD tombol senter = lock ke muka killer", C.FIRE_BRIGHT)
+    lbl("LEPAS = kamera bebas", C.GRN)
+    lbl("Radius UNLIMITED", C.ACC2)
 
     sl("Smoothness", 0.1, 1, 0.5, function(v)
         AimbotSenter.Smoothness = v
@@ -4463,7 +4500,7 @@ makeTab("Survivor", "🏃", 1, function()
         AimbotSenter.LaserColor = c
     end)
 
-    -- ⚡ AUTO SKILL CHECK
+    -- AUTO SKILL CHECK
     sec("Auto Skill Check (2 MODE)", "⚡")
     tog("Enable Auto Skill Check", false, function(s)
         SkillCheck.Enabled = s
@@ -4485,7 +4522,7 @@ makeTab("Survivor", "🏃", 1, function()
         SkillCheck.Total = 0
     end)
 
-    -- 🔓 AUTO WIGGLE
+    -- AUTO WIGGLE
     sec("Auto Wiggle (Anti Gendong)", "🔓")
     tog("Enable Auto Wiggle", false, function(s)
         AutoParry.Wiggle = s
@@ -4495,7 +4532,7 @@ makeTab("Survivor", "🏃", 1, function()
         AutoParry.WiggleSpam = v
     end)
 
-    -- 🏃 AUTO FLEE
+    -- AUTO FLEE
     sec("Auto Flee Killer", "🏃‍♂️")
     tog("Enable Auto Flee", false, function(s)
         AutoFlee.Enabled = s
@@ -4508,7 +4545,7 @@ makeTab("Survivor", "🏃", 1, function()
         AutoFlee.Cooldown = v
     end)
 
-    -- ⚡ FAST VAULT
+    -- FAST VAULT
     sec("Fast Vault", "⚡")
     tog("Enable Fast Vault", false, function(s)
         FastVault.Enabled = s
@@ -4521,7 +4558,7 @@ makeTab("Survivor", "🏃", 1, function()
         FastVault.Speed = v
     end)
 
-    -- 🚪 AUTO ESCAPE
+    -- AUTO ESCAPE
     sec("Auto Escape Gate", "🚪")
     tog("Enable Auto Escape", false, function(s)
         S.AutoEscapeGate = s
@@ -4538,18 +4575,18 @@ makeTab("Survivor", "🏃", 1, function()
         S.AutoEscapeRange = v
     end)
 
-    -- 🛡️ GOD MODE
+    -- GOD MODE
     sec("God Mode", "🛡️")
     tog("God Mode (Full)", false, function(s)
         GodMode.Enabled = s
     end)
     lbl("Anti Down + Anti Stun + Anti Grab", C.DIM)
 
-    -- 💊 SUPPORT
+    -- SUPPORT
     sec("Support", "💊")
     tog("Instant Interact", false, function(s) S.InstantInteract = s end)
 
-    -- 🌀 TELEPORT
+    -- TELEPORT
     sec("Teleport", "🌀")
     btn("TP ke Finish Line", function()
         teleportToFinishLine()
@@ -4811,9 +4848,7 @@ makeTab("Moonwalk", "🕺", 5, function()
     end)
 end)
 
-print("✅ [7/13] COSMIC - Survivor + Killer + ESP + Fire + Moonwalk Loaded")
-print("🛡️ Auto Parry: Radius 15 | Debounce 0.05 | Face 0.3")
-print("🔦 Aimbot Senter: Auto Lock (Toggle di Tab Survivor)")-- =========================================================
+print("✅ [7/13] COSMIC - Survivor + Killer + ESP + Fire + Moonwalk Loaded")-- =========================================================
 -- SECTION 8/13 : TAB UI PART 2
 -- =========================================================
 
@@ -5043,7 +5078,7 @@ makeTab("Visual", "✨", 9, function()
         S.Korblox = s
         applyKorblox(s, "Pencil", S.KorbloxYOffset, S.KorbloxScale)
     end)
-    sl("Korblox Y", -2, 2, 0.6, function(v)
+    sl("Korblox Y", -2, 2, 0.80, function(v)
         S.KorbloxYOffset = v
         if S.Korblox then applyKorblox(true, "Pencil", v, S.KorbloxScale) end
     end)
@@ -5232,10 +5267,8 @@ makeTab("Hitbox", "📦", 10, function()
 end)
 
 print("✅ [8/13] COSMIC - Misc + Visual + Hitbox Loaded")-- =========================================================
--- SECTION 9/13 : KEYBIND (NO AUTO APPLY)
+-- SECTION 9/13 : KEYBIND
 -- =========================================================
-
--- ❌ AUTO APPLY DIHAPUS - Semua fitur manual
 
 -- KEYBIND V UNTUK MOONWALK
 UIS.InputBegan:Connect(function(input, gpe)
@@ -5295,13 +5328,13 @@ end)
 
 print("[KEYBIND] V = Moonwalk | K = Unlock Camera")
 
--- Create FPS/Ping GUI (hidden by default)
+-- Create FPS/Ping GUI
 task.spawn(function()
     task.wait(3)
     pcall(createFPSPingGui)
 end)
 
--- ❌ NO AUTO APPLY SAAT RESPAWN
+-- NO AUTO APPLY SAAT RESPAWN
 LP.CharacterAdded:Connect(function(char)
     task.wait(1.5)
     print("[RESPAWN] Fitur manual - user toggle sendiri")
@@ -5332,8 +5365,16 @@ task.spawn(function()
     end
 end)
 
+-- Scan tombol senter loop (kalo Aimbot Senter ON)
+task.spawn(function()
+    while task.wait(2) do
+        if AimbotSenter.Enabled then
+            pcall(HookSenterButtons)
+        end
+    end
+end)
+
 print("✅ [9/13] COSMIC - Keybind Loaded")
-print("❌ Auto apply dihapus - semua fitur manual")
 print("⌨️ Keybind: V = Moonwalk | K = Unlock Camera")-- =========================================================
 -- SECTION 10/13 : LOGIC FITUR BARU + FIX FOV BIND
 -- =========================================================
@@ -5497,7 +5538,7 @@ task.spawn(function()
     end
 end)
 
--- GABUNG SKY + FIRE AUTO-REAPPLY (2 → 1)
+-- SKY + FIRE AUTO-REAPPLY
 task.spawn(function()
     while task.wait(8) do
         if S.SkyId and S.SkyId ~= "Default" then
@@ -5535,9 +5576,7 @@ task.spawn(function()
     end)
 end)
 
-print("✅ [10/13] COSMIC - Logic Fitur Baru Loaded")
-print("⚡ Sky+Fire Auto-Reapply: 1 loop (8s)")
-print("🎥 FOV Bind: RenderStepped")-- =========================================================
+print("✅ [10/13] COSMIC - Logic Fitur Baru Loaded")-- =========================================================
 -- SECTION 11/13 : PRINT FINAL
 -- =========================================================
 task.wait(0.5)
@@ -5562,10 +5601,11 @@ print("║        Stun: SKIP                        ║")
 print("║        WalkCrouch: SKIP                  ║")
 print("╠══════════════════════════════════════════╣")
 print("║  AIMBOT SENTER (Tab Survivor)            ║")
-print("║     -> Auto Lock (No Button)             ║")
+print("║     -> Radius UNLIMITED                  ║")
+print("║     -> HOLD tombol senter = lock         ║")
+print("║     -> LEPAS = kamera bebas              ║")
 print("║     -> Lock ke Muka Killer               ║")
 print("║     -> ESP Laser                         ║")
-print("║     -> Toggle ON/OFF                     ║")
 print("╠══════════════════════════════════════════╣")
 print("║  AUTO SKILL CHECK (2 MODE)               ║")
 print("║     -> Instant: paksa sukses             ║")
@@ -5584,7 +5624,8 @@ print("║     -> Crosshair 8 Mode                  ║")
 print("║     -> Hitbox (TEXT ANGKA)               ║")
 print("║     -> God Mode                          ║")
 print("║     -> 8-Bit Royal Crown                 ║")
-print("║     -> Korblox Pencil                    ║")
+print("║     -> Korblox Pencil (902942096)        ║")
+print("║     -> Headless FULL                     ║")
 print("║     -> HD Sky (Jernih)                   ║")
 print("║     -> Sky 18 PRESET                     ║")
 print("║     -> ESP Galaxy (Animated)             ║")
@@ -5614,7 +5655,7 @@ print("╚═══════════════════════�
 print("✅ [11/13] COSMIC - FINAL LOADED!")
 print("⚙️ SEMUA FITUR DEFAULT OFF - toggle manual")
 print("🛡️ Auto Parry: Radius 15 | Debounce 0.05 | Face 0.3")
-print("🔦 Aimbot Senter: Auto Lock (No Button)")
+print("🔦 Aimbot Senter: HOLD = lock | LEPAS = bebas")
 print("⚡ Auto Skill Check: Fallens Style")
 print("🎥 Camera Fix: Anti-Lock Active")
 print("🎯 Klik tombol C untuk buka menu")-- =========================================================
@@ -6059,9 +6100,7 @@ makeTab("Aimbot", "🎯", 6, function()
     end)
 end)
 
-print("✅ [12/13] COSMIC - AIMBOT TAB Loaded")
-print("🎯 Target Survivor | Radius max 100")
-print("👁️ Floating GUI: Toggle di tab Aimbot")-- =========================================================
+print("✅ [12/13] COSMIC - AIMBOT TAB Loaded")-- =========================================================
 -- SECTION 13/13 : ANTI-ILANG MENU + AUTO RECOVERY
 -- =========================================================
 
@@ -6095,7 +6134,7 @@ end)
 
 print("[ANTI-HILANG] Force ResetOnSpawn = false aktif")
 
--- 🆕 AUTO RE-EXECUTE URL
+-- AUTO RE-EXECUTE URL
 local SCRIPT_URL = "https://raw.githubusercontent.com/tiarkenn-dev/Cosmishub/main/main.lua"
 
 function RecreateAllGUI()
@@ -6215,5 +6254,7 @@ print("✅ [13/13] ANTI-ILANG MENU LOADED")
 print("")
 print("🎯 Klik tombol C untuk buka menu")
 print("🛡️ Auto Parry: Tab Survivor")
-print("🔦 Aimbot Senter: Tab Survivor (Auto Lock)")
+print("🔦 Aimbot Senter: HOLD tombol = lock | LEPAS = bebas")
+print("🦴 Korblox: Tab Visual (Mesh 902942096 | Offset 0.80)")
+print("👤 Headless: Tab Misc / Visual (FULL)")
 print("")
